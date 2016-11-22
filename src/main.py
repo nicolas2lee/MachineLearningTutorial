@@ -1,8 +1,8 @@
 #===================== init phase ====================
 #=====  read file and load data, generate tuple 
 
-#infname='./../data/fresh_comp_offline/tianchi_fresh_comp_train_user.csv'
-infname='./../data/fresh_comp_offline/rawshortdata.csv'
+infname='./../data/fresh_comp_offline/tianchi_fresh_comp_train_user.csv'
+#infname='./../data/fresh_comp_offline/rawshortdata.csv'
 f = open(infname,'rb')
 context=f.readlines()
 
@@ -21,7 +21,6 @@ train_day1217=[]
 # 2 collect
 # 3 Add shopping cart
 # 4 buy 
-train_day1217=[]
 
 for line in context:
   line = line.replace('\n', '')
@@ -46,7 +45,12 @@ for line in context:
 train_day1217=list(set(train_day1217))
 offline_evaluate_day1218=list(set(offline_evaluate_day1218))
 online_evaluate_day1219=list(set(online_evaluate_day1219))
-
+print 'train day 1217 length is '
+print len(train_day1217)
+print 'offline evaluate day1218 is '
+print len(offline_evaluate_day1218)
+print 'online evaluate day1219 is '
+print len(online_evaluate_day1219)
 #================== Preprocess Data
 #======= for feature
 '''
@@ -55,7 +59,6 @@ for i in range(4):
 '''
 #================== the same as before
 ui_dict = [ {} for i in range(4)]
-
 for line in context:
   line = line.replace('\n', '')
   array = line.split(',')
@@ -67,9 +70,10 @@ for line in context:
   uid = (array[0], array[1], month, day)
   behavior_type=int(array[2])-1
   if uid in ui_dict[behavior_type]:
-    ui_dict[behavior_type][u_id]+=1
+    ui_dict[behavior_type][uid]+=1
   else:
-    ui_dict[behavior_type]=1
+    ui_dict[behavior_type][uid]=1
+
 #======== for label
 ui_buy={}
 for line in context:
@@ -101,4 +105,15 @@ for uid in train_day1217:
   else:
     y[id]=0
   id+=1
+print 'train set X ' + X
+print 'train set y ' + y
 #================= train and fit the logistic regression model
+from sklearn.linear_model import LogisticRegression
+
+classifier = LogisticRegression()
+print X
+print y
+classifier.fit(X, y)
+
+#py = classifier.predict(offline_evaluate_day1218)
+#print py
