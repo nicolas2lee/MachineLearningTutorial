@@ -2,10 +2,11 @@
 #=====  read file and load data, generate tuple 
 
 infname='./../data/fresh_comp_offline/tianchi_fresh_comp_train_user.csv'
+outfname='./../data/output/output.csv'
 #infname='./../data/fresh_comp_offline/rawshortdata.csv'
-f = open(infname,'rb')
+f = open(infname,'r')
 context=f.readlines()
-
+f.close()
 #===== target : day 12.19
 #===== data : from 11.18 to 12.18
 #===== definition of features
@@ -45,12 +46,12 @@ for line in context:
 train_day1217=list(set(train_day1217))
 offline_evaluate_day1218=list(set(offline_evaluate_day1218))
 online_evaluate_day1219=list(set(online_evaluate_day1219))
-print 'train day 1217 length is '
-print len(train_day1217)
-print 'offline evaluate day1218 is '
-print len(offline_evaluate_day1218)
-print 'online evaluate day1219 is '
-print len(online_evaluate_day1219)
+#print 'train day 1217 length is'
+print(len(train_day1217))
+#print 'offline evaluate day1218 is '
+print(len(offline_evaluate_day1218))
+#print 'online evaluate day1219 is '
+print(len(online_evaluate_day1219))
 #================== Preprocess Data
 #======= for feature
 '''
@@ -85,35 +86,53 @@ for line in context:
   month = dday[1]
   day = int(dday[2])
   uid=(array[0], array[1], month, day)
-  if array[2]==4 :
+  if int(array[2])==4 :
     ui_buy[uid]=1
+#print (ui_buy)
 
 import numpy as np
-X = np.zeros((len(train_day1217),4))
-y = np.zeros(len(train_day1217))
+import math
 
-id = 0
-for uid in train_day1217:
-  last_uid=(uid[0], uid[1], uid[2], uid[3]-1)
-  for i in range(4):
-    if last_uid in ui_dict[i]:
-      X[i][id]=math.log1p(ui_dict[i][last_uid])
+def adaptDataX(src):
+  X = np.zeros((len(src),4))
+  id = 0
+  for uid in src:
+    last_uid=(uid[0], uid[1], uid[2], uid[3]-1)
+    for i in range(4):
+      if last_uid in ui_dict[i]:
+        X[id][i]=math.log1p(ui_dict[i][last_uid])
+      else:
+        X[id][i]=0
+    id+=1
+  return X
+
+def adaptDataY(src):
+  y = np.zeros(len(src))
+  print (ui_buy)
+  id = 0
+  for uid in src:
+    last_uid=(uid[0], uid[1], uid[2], uid[3]-1)
+    if last_uid in ui_buy:
+      y[id]=1
     else:
-      X[i][id]=0
-  if last_uid in ui_buy:
-    y[id]=1
-  else:
-    y[id]=0
-  id+=1
-print 'train set X ' + X
-print 'train set y ' + y
+      y[id]=0
+    id+=1
+  return y
 #================= train and fit the logistic regression model
 from sklearn.linear_model import LogisticRegression
-
+X1217 = adaptDataX(train_day1217)
+y1217 = adaptDataY(train_day1217)
+print(y1217)
 classifier = LogisticRegression()
-print X
-print y
-classifier.fit(X, y)
+classifier.fit(X1217, y1217)
 
-#py = classifier.predict(offline_evaluate_day1218)
-#print py
+X1218 = adaptDataX(offline_evaluate_day1218)
+py = classifier.predict(X1218)
+
+import csv
+f = open(outfname,'w')
+wr = csv.writer(f, quoting=csv.QUOTE_ALL)
+wr.writerow(py)
+#for line in py:
+#  f.write(py+'\n')
+f.close() # y
